@@ -17,7 +17,7 @@ import hashlib   #for tracking  -- sujal 12/07/24
 # Uncomment the following line if you face the OpenMP error mentioned in the comments
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-api_key = st.secrets["API_KEY"]
+api_key = os.environ['OPENAI_API_KEY']
 
 client = OpenAI(api_key=api_key)
 
