@@ -1,3 +1,16 @@
+# **********************************************************************************************#
+# File name: newmain.py
+# Created by: Krushna B.
+# Creation Date: 25-Jun-2024
+# Application Name: DBQUERY_NEW.AI
+#
+# Change Details:
+# Version No:     Date:        Changed by     Changes Done         
+# 01             XX-May-2024   Sujal S        Initial Creation
+# 05             13-Jul-2024   Sujal S        Added logic for UI Changes 
+# 
+# **********************************************************************************************#
+
 import os
 import streamlit as st
 from langchain.text_splitter import CharacterTextSplitter
@@ -8,34 +21,37 @@ import pandas as pd
 from PyPDF2 import PdfReader 
 from docx import Document
 from pptx import Presentation
-import pdfplumber  #for identifying page number -- sujal 12/07/24
-import easyocr    #for scan document  -- sujal 12/07/24
+import pdfplumber  # for identifying page number
+import easyocr    # for scanning documents
 import numpy as np
 from openai import OpenAI
-import hashlib   #for tracking  -- sujal 12/07/24
+import hashlib   # for tracking
 
 # Uncomment the following line if you face the OpenMP error mentioned in the comments
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-api_key = os.environ['OPENAI_API_KEY']
+# Ensure pycryptodome is installed for AES encryption
+# pip install pycryptodome
+
+##For local environment uncomment below line
+api_key = st.secrets["API_KEY"] 
+
+##For Azure deployment uncomment below line
+#api_key = os.environ['OPENAI_API_KEY']
 
 client = OpenAI(api_key=api_key)
 
 img = Image.open(r"images.png")
 st.set_page_config(page_title="DocGenius: Document Generation AI", page_icon=img)
 
-
 st.sidebar.title("IntelliDoc")
 # Department dropdown in the sidebar
 department = st.sidebar.selectbox("Select Department", ["HR", "Legal", "L&D", "Operations", "Insurance"])
-
 
 # Select file type in the sidebar
 file_type = st.sidebar.selectbox("Select file type", ["PDF", "Scanned PDF", "DOCX", "PPTX", "EXCEL", "CSV"])
 accepted_types = {"PDF": "pdf", "Scanned PDF": "pdf", "DOCX": "docx", "PPTX": "pptx", "EXCEL": "xlsx", "CSV": "csv"}
 file_extension = accepted_types[file_type]
-
-
 
 col1, col2 = st.columns([1, 4])
 
@@ -44,7 +60,6 @@ with col1:
 
 with col2:
     st.title("Ask Your Documents 📄")
-
 
 if "previous_file_type" not in st.session_state:
     st.session_state.previous_file_type = file_type
@@ -64,8 +79,6 @@ if st.sidebar.button("Clear"):
         del st.session_state.previous_files_hash
     st.session_state.query = ""
     st.experimental_rerun()
-    
-
 
 def reset_session():
     if "conversation" in st.session_state:
@@ -123,8 +136,8 @@ if uploaded_files:
             ppt_text = '\n'.join([shape.text for slide in ppt.slides for shape in slide.shapes if hasattr(shape, "text")])
             all_texts.append(ppt_text)
         elif file_type == "EXCEL":
-            df = pd.read_excel(uploaded_file)
-            excel_text = df.to_string(index=False)
+            df_dict = pd.read_excel(uploaded_file, sheet_name=None)     #sheet name none for all sheet consideration
+            excel_text = "\n".join([df.to_string(index=False) for df in df_dict.values()])
             all_texts.append(excel_text)
         elif file_type == "CSV":
             df = pd.read_csv(uploaded_file)
@@ -140,7 +153,7 @@ if uploaded_files:
         embeddings = OpenAIEmbeddings(api_key=api_key)
         knowledge_base = FAISS.from_texts(chunks, embeddings)
 
-        llm_model = st.selectbox("Select LLM Model", ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"])
+        llm_model = st.selectbox("Select LLM Model", ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"])
 
         query = st.text_input("Ask your Question about your documents", value=st.session_state.get("query", ""), key="query")
         if "conversation" not in st.session_state:
@@ -162,5 +175,5 @@ if uploaded_files:
             st.session_state.conversation.append((query, answer))
 
         for question, answer in st.session_state.conversation:
-            st.write(f"*Question:* {question}")
-            st.write(f"*Answer:* {answer}")
+            st.write(f"**Question:** {question}")
+            st.write(f"**Answer:** {answer}")
