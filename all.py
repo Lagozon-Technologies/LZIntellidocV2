@@ -34,10 +34,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 # pip install pycryptodome
 
 ##For local environment uncomment below line
-api_key = st.secrets["API_KEY"] 
+# api_key = st.secrets["API_KEY"] 
 
 ##For Azure deployment uncomment below line
-#api_key = os.environ['OPENAI_API_KEY']
+api_key = os.environ['OPENAI_API_KEY']
 
 client = OpenAI(api_key=api_key)
 
